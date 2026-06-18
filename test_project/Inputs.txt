@@ -1,0 +1,65 @@
+
+######################################
+# Geometry Inputs
+######################################
+
+geometry_file   =   plane.stl
+surf_prop_file  =   plane.srf
+scale_factor    =   1.0                 // [-]
+offset_x        =   0.0                 // [m]
+offset_y        =   0.0                 // [m]
+offset_z        =   0.0                 // [m]
+rotate_x        =   0.0                 // [deg]   
+rotate_y        =   0.0                 // [deg]
+rotate_z        =   0.0                 // [deg]
+reference_area  =   1.0              // [m^2]
+reference_chord =   1.0                 // [m]
+surface_temp    =   400                 // [K]
+
+######################################
+# Domain Inputs
+######################################
+
+molar_mass      =   15.999              // [kg/kmol]
+temperature     =   1000                // [K]
+gas_speed       =   7000                // [m/s]
+
+######################################
+# GSI Inputs
+######################################
+
+gsi_model       =   DRIA           // either "DRIA" or "CLL" or "rough_CLL"
+parameter_1     =   0.5                 // alpha for "DRIA" or alpha_n for "CLL"
+parameter_2     =   0.1                 // sigma_t for "CLL"
+parameter_3     =   0.0                 // roughness parameter for "rough CLL"
+
+######################################
+# Simulation Inputs
+######################################
+
+num_rays        =   10000                // [-]
+child_rays      =   1                   // [-]
+max_bounces     =   1                   // [-]
+angle_of_attack =   0.0                 // [deg]
+sideslip_angle  =   0.0                 // [deg]
+
+######################################
+# Batch Analysis
+######################################
+
+varry_param     =   angles              // deprecated
+param_1_lower   =   0.0                 // left boundary of AoA range
+param_1_upper   =   90.0                // right boundary of AoA range
+param_1_step    =   10.0                // step size of AoA variation
+param_2_lower   =   0.0                 // left boundary of SS range
+param_2_upper   =   0.0                 // right boundary of SS range
+param_2_step    =   10.0                 // step size of SS range
+param_3_lower   =   5.0                 // left boundary of speed ratio range
+param_3_upper   =   18.0                 // right boundary of speed ratio range
+param_3_step    =   1.0                 // step size of speed ratio range
+param_4_lower   =   0.8                 // left boundary of alpha_n range (or alpha if DRIA)
+param_4_upper   =   0.8                 // right boundary of alpha_n range (or alpha if DRIA)
+param_4_step    =   0.05                 // step size of alpha_n range (or alpha if DRIA)
+param_5_lower   =   0.0                 // left boundary of sigma_t range (N/A if DRIA)
+param_5_upper   =   0.0                 // right boundary of sigma_t range (N/A if DRIA)
+param_5_step    =   0.25                 // step size of sigma_t range (N/A if DRIA)
