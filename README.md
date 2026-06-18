@@ -1,93 +1,243 @@
 # ATHENS
 
+**ATHENS** stands for **Aerodynamic Tracer for High-altitude Environment Numerical Simulations**.
 
+ATHENS is an open-source C++17 ray-tracing code for modelling the aerodynamic behaviour of Resident Space Objects in low Earth orbit under free-molecular, hyperthermal flow conditions. It is intended for orbital-aerodynamics applications where intermolecular gas collisions are negligible on the scale of the spacecraft, making a ray-tracing treatment more efficient than full DSMC or TPMC simulation.
 
-## Getting started
+The code represents the atmosphere through gas rays travelling through a cuboidal computational domain. These rays are generated from the domain boundaries according to the prescribed free-stream velocity, gas temperature, and molecular species. Each ray carries a molecular mass flux and has a velocity composed of a bulk flow component and a thermal component sampled from a Maxwellian distribution.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+Spacecraft geometries are imported from STL files and represented as triangular surface meshes. ATHENS detects ray-surface intersections with the geometry, computes the transferred momentum, and generates reflected rays according to the selected gas-surface interaction model. The code supports repeated reflections, making it suitable for both convex and concave geometries.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+The currently implemented gas-surface interaction models are:
 
-## Add your files
+* **DRIA**: Diffuse Re-emission with Incomplete Accommodation
+* **CLL**: Cercignani-Lampis-Lord scattering kernel
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+ATHENS computes global aerodynamic force and moment coefficients, including drag, lift, and side-force components. It can also compute surface-resolved pressure and shear coefficient distributions over the triangular mesh.
 
+## Repository structure
+
+```text
+.
+├── athens              # Compiled executable, generated after compilation
+├── src/                # Source files
+├── code_files/         # Additional code and configuration files
+├── test_project/       # Example project directory
+├── compile.sh          # Compilation script
+├── run.sh              # MPI run script
+├── postprocess.sh      # Post-processing script
+├── plot.sh             # Plotting script
+├── clean.sh            # Cleanup script
+├── LICENSE
+└── README.md
 ```
-cd existing_repo
-git remote add origin https://gitlab.tudelft.nl/svanton/athens.git
-git branch -M main
-git push -uf origin main
+
+## Requirements
+
+ATHENS requires:
+
+* A C++17-compatible compiler
+* MPI
+* `mpirun`
+* Bash
+
+On an HPC system, load the required compiler and MPI modules before compiling or running the code.
+
+Example:
+
+```bash
+module load gcc
+module load openmpi
 ```
 
-## Integrate with your tools
+The exact module names depend on the system.
 
-- [ ] [Set up project integrations](https://gitlab.tudelft.nl/svanton/athens/-/settings/integrations)
+## Compilation
 
-## Collaborate with your team
+Compile the code from the repository root:
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+```bash
+./compile.sh
+```
 
-## Test and Deploy
+If compilation is successful, the executable is created as:
 
-Use the built-in continuous integration in GitLab.
+```text
+./athens
+```
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+## Running ATHENS
 
-***
+ATHENS is run using:
 
-# Editing this README
+```bash
+./run.sh -project=<project_name> -np=<number_of_processes> -id=<simulation_id>
+```
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+Example:
 
-## Suggestions for a good README
+```bash
+./run.sh -project=test_project -np=16 -id=0
+```
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+This runs ATHENS in parallel using MPI:
 
-## Name
-Choose a self-explaining name for your project.
+```bash
+mpirun -np <number_of_processes> ./athens --project=<project_name> --id=<simulation_id>
+```
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+## Batch mode
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+To run in batch mode, add the `-batch` flag:
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+```bash
+./run.sh -project=<project_name> -np=<number_of_processes> -id=<simulation_id> -batch
+```
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+Example:
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+```bash
+./run.sh -project=test_project -np=16 -id=0 -batch
+```
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+This passes the `--batch` flag to the ATHENS executable.
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+## Command-line arguments
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+The `run.sh` script uses the following arguments:
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+| Argument                    | Description                            |
+| --------------------------- | -------------------------------------- |
+| `-project=<project_name>`   | Name of the project directory          |
+| `-np=<number_of_processes>` | Number of MPI processes                |
+| `-id=<simulation_id>`       | ID of the simulation run               |
+| `-batch`                    | Optional flag for batch-mode execution |
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+Internally, these are passed to the ATHENS executable as:
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+| ATHENS argument            | Description                   |
+| -------------------------- | ----------------------------- |
+| `--project=<project_name>` | Name of the project directory |
+| `--id=<simulation_id>`     | ID of the simulation run      |
+| `--batch`                  | Enables batch-mode execution  |
 
-## License
-For open source projects, say how it is licensed.
+## Project directories
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Each simulation is associated with a project directory. The project directory contains the input files and stores the output files for a given set of simulations.
+
+A typical run is:
+
+```bash
+./run.sh -project=test_project -np=16 -id=0
+```
+
+Here:
+
+* `test_project` is the project directory
+* `16` is the number of MPI processes
+* `0` is the simulation ID
+
+## Output
+
+Simulation output is written inside the selected project directory.
+
+For batch simulations, ATHENS may create a batch-results directory such as:
+
+```text
+<project_name>/Batch_Results/
+```
+
+Post-processing and plotting can then be performed with:
+
+```bash
+./postprocess.sh
+./plot.sh
+```
+
+Check the relevant scripts before running them, since they may assume specific project names, file paths, or output formats.
+
+## Gas species
+
+The code includes constants for common thermospheric gas species:
+
+| Species            | Symbol |
+| ------------------ | ------ |
+| Atomic oxygen      | AO     |
+| Molecular oxygen   | O2     |
+| Helium             | He     |
+| Molecular nitrogen | N2     |
+| Argon              | Ar     |
+
+These constants are used together with the gas constant, Avogadro constant, and Boltzmann constant in the gas-surface interaction calculations.
+
+## Running on DelftBlue
+
+To run on DelftBlue, first connect to the login node:
+
+```bash
+ssh <netid>@login.delftblue.tudelft.nl
+```
+
+Move to the ATHENS repository:
+
+```bash
+cd athens_4tu
+```
+
+Compile:
+
+```bash
+./compile.sh
+```
+
+Run a simulation using MPI:
+
+```bash
+./run.sh -project=<project_name> -np=<number_of_processes> -id=<simulation_id>
+```
+
+Run a batch simulation:
+
+```bash
+./run.sh -project=<project_name> -np=<number_of_processes> -id=<simulation_id> -batch
+```
+
+Use realistic wall-time requests when submitting jobs on the cluster.
+
+## Cleaning generated files
+
+To remove generated files, use:
+
+```bash
+./clean.sh
+```
+
+Check the contents of `clean.sh` before running it, since cleanup scripts may remove compiled files or simulation output.
+
+## Typical workflow
+
+```bash
+# 1. Compile
+./compile.sh
+
+# 2. Run a test case in parallel
+./run.sh -project=test_project -np=16 -id=0
+
+# 3. Run a batch case
+./run.sh -project=test_project -np=16 -id=0 -batch
+
+# 4. Post-process results
+./postprocess.sh
+
+# 5. Plot results
+./plot.sh
+```
+
+## Notes
+
+* Run all scripts from the repository root unless stated otherwise.
+* Ensure that `athens` exists before running `run.sh`.
+* Ensure that `mpirun` is available in the current environment.
+* On HPC systems, compile and run using compatible compiler and MPI modules.
+* Keep large simulation output on scratch storage when running on a cluster.
+* Do not assume scratch storage is backed up.
